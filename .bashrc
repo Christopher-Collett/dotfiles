@@ -124,5 +124,10 @@ if ! shopt -oq posix; then
   fi
 fi
 
+# set PATH so it includes npm global directory
+if [ -d "$HOME/.npm-global/bin" ] ; then
+    PATH="$HOME/.npm-global/bin:$PATH"
+fi
+
 eval "$(starship init bash)"
 . "$HOME/.cargo/env"
