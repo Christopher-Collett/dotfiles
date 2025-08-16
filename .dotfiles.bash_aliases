@@ -1,0 +1,6 @@
+alias python='python3'
+alias vi='lvim'
+alias update='sudo apt update && sudo apt upgrade -y'
+alias text='sudo systemctl isolate multi-user.target'
+alias gui='sudo systemctl isolate graphical.target'
+alias sd='shutdown -h now'
