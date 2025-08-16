@@ -1,0 +1,22 @@
+# ignore dotfiles
+dotfiles/
+.dotfiles_local_settings
+
+# ignore sensitive data
+.gitlab*
+.ssh
+.bash_history*
+
+# ignore projects
+Projects
+
+# ignore common folders
+Desktop
+Documents
+Downloads
+Music
+Pictures
+Public
+Templates
+Videos
+
