@@ -1,0 +1,82 @@
+# Adapted from https://www.adamdehaven.com/snippets/how-to-customize-your-shell-prompt-with-starship
+
+# Insert a blank line between shell prompts
+add_newline = true
+
+# Increase the default command timeout to 2 seconds
+command_timeout = 2000
+
+# Define the order and format of the information in our prompt
+format = """\
+$battery\
+[](fg:black)\
+$directory\
+${custom.directory_separator_not_git}\
+${custom.directory_separator_git}\
+$symbol($git_branch[](fg:#8B0000)) \
+$symbol($git_commit$git_status$git_metrics$git_state)$all$custom$cmd_duration\n\
+$character"""
+
+# Disable the line break between the first and second prompt lines
+[line_break]
+disabled = true
+
+# Customize the format of the working directory
+[directory]
+truncate_to_repo = true
+format = "[📁 $path ]($style)"
+style = "fg:white bg:black"
+
+[git_branch]
+symbol = " "
+format = "[ $symbol$branch(:$remote_branch) ]($style)"
+style = "bold fg:white bg:#8B0000"
+
+[git_metrics]
+disabled = true
+
+[package]
+disabled = false # Shows the current working directory's package version
+format = "[$symbol$version]($style) "
+display_private = true
+
+# Output the command duration
+[cmd_duration]
+min_time = 1_000
+format = "[ -- 🕒 $duration]($style)"
+style = "grey"
+
+[[battery.display]]
+threshold = 20
+style = 'red'
+discharging_symbol = "🪫"
+
+[[battery.display]]
+threshold = 10
+style = 'red'
+discharging_symbol = "💀"
+
+# Output a styled separator right after the directory when inside a git repository.
+[custom.directory_separator_git]
+description = "Output a styled separator right after the directory when inside a git repository."
+command = ""
+format = "[](fg:black bg:#8B0000)"
+# Only when inside git repository
+when = "git rev-parse --is-inside-work-tree >/dev/null 2>&1"
+
+# Output a styled separator right after the directory when NOT inside a git repository.
+[custom.directory_separator_not_git]
+description = "Output a styled separator right after the directory when NOT inside a git repository."
+command = ""
+format = "[](fg:black)"
+# Only when NOT inside a git repository
+when = "! git rev-parse --is-inside-work-tree > /dev/null 2>&1"
+
+[custom.cpp]
+disabled=false
+detect_extensions = ['cpp', 'cc', 'cxx', 'c++', 'hpp', 'hh', 'hxx', 'h++', 'tcc']
+detect_files = ['.clang-format']
+command = "clang++ --version | awk '{print $4}'"
+symbol = ''
+format = 'via [$symbol $output]($style)'
+
