@@ -3,6 +3,8 @@ dotfiles/
 .dotfiles_local_settings
 
 # ignore sensitive data
+.git-credentials
+.gitconfig
 .gitlab*
 .ssh
 .bash_history*
