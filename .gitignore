@@ -1,5 +1,5 @@
 # ignore dotfiles
-dotfiles/
+.dotfiles/
 .dotfiles_local_settings
 
 # ignore sensitive data
