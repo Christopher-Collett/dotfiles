@@ -129,5 +129,9 @@ if [ -d "$HOME/.npm-global/bin" ] ; then
     PATH="$HOME/.npm-global/bin:$PATH"
 fi
 
+if [ -d "$HOME/Scripts" ] ; then
+    PATH="$HOME/Scripts:$PATH"
+fi
+
 eval "$(starship init bash)"
 . "$HOME/.cargo/env"
