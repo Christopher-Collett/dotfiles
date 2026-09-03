@@ -5,7 +5,7 @@
 -- Discord: https://discord.com/invite/Xb9B4Ny
 
 lvim.transparent_window = true
-vim.opt_global.textwidth = 100
+vim.opt_global.textwidth = 140 -- default - ftplugin to configure by file type.
 vim.opt_global.colorcolumn = "+1"
 
 vim.opt_global.tabstop = 4
@@ -17,9 +17,26 @@ lvim.builtin.nvimtree.setup.view = {
     width = '25%',
 }
 
--- find and replace (make a function for this sometime)
--- vimgrep /$pattern/g ./**/*.{c,h,cpp,tpp,hpp,build} -- or whatever other file endings you want (could be another parameter)
--- cdo s/$pattern/$replacement/
+vim.api.nvim_create_user_command('FindReplace', function(opts)
+    -- Extract search and replace terms from the command arguments
+    local args = vim.split(opts.args, ' ')
+    if #args < 2 then
+        vim.notify('FindReplace requires two arguments: <search> <replace>', vim.log.levels.ERROR)
+        return
+    end
+    local search = args[1]
+    local replace = args[2]
+
+    -- Run grep to populate the quickfix list
+    vim.cmd('Telescope grep_string use_regex=true search=' .. search)
+    vim.cmd('call QuickFixToggle()')
+
+    -- Perform the replacement across all files in the quickfix list
+    vim.cmd('cfdo %s/' .. search .. '/' .. replace .. '/g')
+
+    -- Save all modified files
+    vim.cmd('cfdo update')
+end, { nargs = '+' })
 
 -- Auto save any file every time the text has changed.
 vim.api.nvim_create_autocmd({"TextChanged", "InsertLeave"},
@@ -35,6 +52,26 @@ vim.api.nvim_create_autocmd({"TextChanged", "InsertLeave"},
 
 -- Variable assignments
 lvim.keys.normal_mode["<leader>cc"] = "<cmd>:BufferKill<cr>"
+lvim.keys.normal_mode["<leader>cb"] = "<cmd>:make<cr>"
+
+-- Open the current file in the default browser via xdg-open.
+-- Markdown files are rendered to HTML first (see ~/Scripts/render_markdown)
+-- so the browser shows formatted output instead of raw source.
+lvim.keys.normal_mode["<leader>O"] = function()
+    local file = vim.fn.expand("%:p")
+    if file == "" then
+        vim.notify("No file to open", vim.log.levels.WARN)
+        return
+    end
+
+    if vim.bo.filetype == "markdown" or file:match("%.md$") or file:match("%.markdown$") then
+        -- Render the on-disk file, so save any unwritten changes first.
+        if vim.bo.modified then vim.cmd("write") end
+        vim.fn.jobstart({ "render_markdown", file }, { detach = true })
+    else
+        vim.fn.jobstart({ "xdg-open", file }, { detach = true })
+    end
+end
 
 -- Use tab and shift tab to cycle between tabs
 lvim.keys.normal_mode["<Tab>"] = "<cmd>:bnext<cr>"
@@ -105,9 +142,27 @@ code_actions.setup {
   },
 }
 
--- vim.cmd('!python3 -c "from powerline.vim import setup as powerline_setup; powerline_setup(); del powerline_setup"')
--- vim.cmd('!python3 powerline_setup()')
--- vim.cmd('!python3 del powerline_setup')
+-- Custom highlighting
+vim.api.nvim_create_autocmd({"ColorScheme"}, {
+    pattern = "*",
+    callback = function ()
+        vim.api.nvim_set_hl(0, "@lsp.type.macro.cpp", { fg = "#3366FF", bold = true })
+        vim.api.nvim_set_hl(0, "@lsp.type.class.cpp", { fg = "#00CC99", bold = true })
+        vim.api.nvim_set_hl(0, "@lsp.type.parameter.cpp", { fg = "#FFCC99", bold = true })
+        vim.api.nvim_set_hl(0, "@number.cpp", { fg = "#FF6699" })
+    end
+})
+
+-- Wrap text for Markdown and Plain Text files
+vim.api.nvim_create_autocmd("FileType", {
+  pattern = { "markdown", "text", "plaintex" },
+  callback = function()
+    vim.opt_local.wrap = true
+    vim.opt_local.linebreak = true -- Optional: wrap at word boundary
+  end,
+})
+
+require("luasnip.loaders.from_lua").load({ paths = "~/.config/lvim/luasnippets" })
 
 -----------------------------------------------------------------------------------------------
 -- The following is obtained from https://github.com/LunarVim/starter.lvim/blob/c-ide/config.lua
