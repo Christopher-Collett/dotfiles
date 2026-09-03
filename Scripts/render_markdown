@@ -1,0 +1,104 @@
+#!/bin/python3
+
+"""Render a Markdown file to a styled HTML temp file and open it in the browser.
+
+The temp file holds rendered (possibly sensitive) content, so it is deleted a
+few seconds after launching the browser -- long enough for the browser to load
+it into memory, short enough that it does not linger on disk.
+"""
+
+import re
+import sys
+import time
+import subprocess
+import tempfile
+from pathlib import Path
+from argparse import ArgumentParser
+
+import markdown
+
+STYLE = """
+body { max-width: 50em; margin: 2em auto; padding: 0 1em;
+       font: 16px/1.6 system-ui, sans-serif; }
+pre, code { background: #f4f4f4; border-radius: 4px; }
+pre { padding: 1em; overflow: auto; }
+code { padding: .1em .3em; }
+pre code { padding: 0; }
+table { border-collapse: collapse; }
+td, th { border: 1px solid #ccc; padding: .3em .6em; }
+blockquote { border-left: 4px solid #ccc; margin: 0; padding: 0 1em; color: #555; }
+img { max-width: 100%; }
+"""
+
+TEMPLATE = (
+    '<!doctype html><html><head><meta charset="utf-8">'
+    "<title>{title}</title><style>{style}</style></head>"
+    "<body>{body}</body></html>"
+)
+
+# Seconds to leave the temp file on disk for the browser to load before deleting.
+CLEANUP_DELAY = 5
+
+
+# Matches src="..." / href="..." (single or double quoted) in the rendered HTML.
+_SRC_ATTR = re.compile(r'\b(src|href)=(["\'])(.*?)\2')
+
+
+def _absolutize_local_refs(html: str, base_dir: Path) -> str:
+    """Rewrite relative img/link paths to file:// URIs anchored at base_dir.
+
+    The HTML is written to a temp dir, so a browser would otherwise resolve a
+    relative src like "../../foo.png" against /tmp and fail to find it. We anchor
+    such refs at the Markdown file's own directory instead. Absolute paths and
+    URIs with a scheme (http:, data:, file:, #anchors) are left untouched.
+    """
+
+    def repl(m: re.Match) -> str:
+        attr, quote, ref = m.group(1), m.group(2), m.group(3)
+        if not ref or ref.startswith(("#", "/")) or re.match(r"^[a-zA-Z][\w+.-]*:", ref):
+            return m.group(0)
+        resolved = (base_dir / ref).resolve()
+        return f'{attr}={quote}{resolved.as_uri()}{quote}'
+
+    return _SRC_ATTR.sub(repl, html)
+
+
+def render(md_path: Path) -> str:
+    body = markdown.markdown(
+        md_path.read_text(encoding="utf-8"),
+        extensions=["fenced_code", "tables", "toc"],
+    )
+    body = _absolutize_local_refs(body, md_path.resolve().parent)
+    return TEMPLATE.format(title=md_path.name, style=STYLE, body=body)
+
+
+def parse_cli_args() -> Path:
+    parser = ArgumentParser(description="Render a Markdown file and open it in the browser.")
+    parser.add_argument("md_path", type=Path, help="Path to a Markdown file.")
+    return parser.parse_args().md_path
+
+
+def main():
+    md_path = parse_cli_args()
+    if not md_path.is_file():
+        sys.exit(f"render_markdown: no such file: {md_path}")
+    html = render(md_path)
+
+    with tempfile.NamedTemporaryFile(
+        mode="w", suffix=".html", prefix="render_markdown_",
+        delete=False, encoding="utf-8",
+    ) as fh:
+        fh.write(html)
+        out_path = fh.name
+
+    subprocess.Popen(["xdg-open", out_path])
+
+    # Give the browser time to read the file, then remove it so the rendered
+    # content does not linger on disk.
+    time.sleep(CLEANUP_DELAY)
+    Path(out_path).unlink(missing_ok=True)
+    print(f"Rendered {md_path}; temp file removed after {CLEANUP_DELAY}s")
+
+
+if __name__ == "__main__":
+    main()

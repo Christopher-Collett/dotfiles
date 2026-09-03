@@ -67,6 +67,7 @@ lvim.keys.normal_mode["<leader>O"] = function()
     if vim.bo.filetype == "markdown" or file:match("%.md$") or file:match("%.markdown$") then
         -- Render the on-disk file, so save any unwritten changes first.
         if vim.bo.modified then vim.cmd("write") end
+        -- Uses a render_markdown script that is on the path.
         vim.fn.jobstart({ "render_markdown", file }, { detach = true })
     else
         vim.fn.jobstart({ "xdg-open", file }, { detach = true })

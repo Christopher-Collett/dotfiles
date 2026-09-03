@@ -1,0 +1,27 @@
+#!/bin/python3
+
+import json
+from pathlib import Path
+from argparse import ArgumentParser
+
+
+def pretty_print(json_path: Path):
+    original = json.loads(json_path.read_text(encoding='utf-8'))
+    json_path.write_text(json.dumps(original, indent=4), encoding='utf-8')
+
+
+def parse_cli_args():
+    parser = ArgumentParser(description='Make a json file "pretty printed".')
+    parser.add_argument('json_path', help='Path to a json file.')
+    args = parser.parse_args()
+    return args.json_path
+
+
+def main():
+    path = Path(parse_cli_args())
+    pretty_print(path)
+    print(f'Pretty printed {path}')
+
+
+if __name__ == '__main__':
+    main()
