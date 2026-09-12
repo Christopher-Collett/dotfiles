@@ -1,0 +1,94 @@
+#!/bin/bash
+#
+# make_tmux_start_script - Analyze a running tmux session and generate a "start..." script
+#             that replicates it (session name, working dir, named windows).
+#
+# Usage: make_tmux_start_script [session]   (defaults to the currently attached session)
+#
+# The generated script is written to ~/Scripts/start<session> and follows the
+# format of the other start* scripts in this directory.
+
+set -e
+
+session="$1"
+
+# Default to the currently attached/active session.
+if [ -z "$session" ]; then
+    if [ -z "$TMUX" ]; then
+        echo "Error: not inside a tmux session and no session name given." >&2
+        echo "Usage: make_tmux_start_script [session]" >&2
+        exit 1
+    fi
+    session=$(tmux display-message -p '#S')
+fi
+
+if ! tmux has-session -t "$session" 2>/dev/null; then
+    echo "Error: no tmux session named '$session'." >&2
+    exit 1
+fi
+
+outfile=~/Scripts/"start$session"
+
+# Replace an absolute home path with ~ so the generated script is portable.
+tildify() {
+    case "$1" in
+        "$HOME"/*) echo "~${1#$HOME}" ;;
+        "$HOME")   echo "~" ;;
+        *)         echo "$1" ;;
+    esac
+}
+
+# Base directory = working directory of the first window.
+basedir=$(tmux list-windows -t "$session" -F '#{pane_current_path}' | head -n1)
+basedir=$(tildify "$basedir")
+
+# Header
+cat > "$outfile" <<EOF
+#!/bin/bash
+
+set -e
+echo Setting up tmux...
+
+cd $basedir
+
+session=$session
+tmux new-session -d -s \$session
+
+EOF
+
+# Windows
+first=1
+while IFS='|' read -r index name path; do
+    path=$(tildify "$path")
+    if [ "$first" = "1" ]; then
+        echo "tmux rename-window -t \$session:$index '$name'"
+        first=0
+    else
+        echo "tmux new-window -t \$session:$index -n '$name'"
+    fi
+    # cd into the window's directory if it differs from the base dir.
+    if [ "$path" != "$basedir" ]; then
+        echo "tmux send-keys -t '$name' 'cd $path' C-m"
+    fi
+    # A "code" window opens the editor.
+    if [ "$name" = "code" ]; then
+        echo "tmux send-keys -t '$name' 'vi .' C-m"
+    fi
+    echo
+done < <(tmux list-windows -t "$session" -F '#{window_index}|#{window_name}|#{pane_current_path}') >> "$outfile"
+
+# Footer
+cat >> "$outfile" <<'EOF'
+if [[ "$1" == "-q" || "$1" == "--quiet" ]]; then
+    echo "Started '$session' session."
+else
+    if [ "$TMUX" ]; then
+      tmux switch-client
+    else
+      tmux attach-session -t $session:1
+    fi
+fi
+EOF
+
+chmod +x "$outfile"
+echo "Wrote $outfile"
