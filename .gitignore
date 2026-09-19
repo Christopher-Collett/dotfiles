@@ -1,6 +1,10 @@
 # ignore dotfiles
 .dotfiles/
 .dotfiles_local_settings
+.dotfiles-backup/
+
+# ignore local backups from checkout
+.bashrc.bak*
 
 # ignore sensitive data
 .git-credentials

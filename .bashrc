@@ -109,10 +109,6 @@ if [ -f ~/.dotfiles.bash_functions ]; then
     . ~/.dotfiles.bash_functions
 fi
 
-if [ -f ~/.dotfiles_local_settings ]; then
-    . ~/.dotfiles_local_settings
-fi
-
 # enable programmable completion features (you don't need to enable
 # this, if it's already enabled in /etc/bash.bashrc and /etc/profile
 # sources /etc/bash.bashrc).
@@ -124,6 +120,12 @@ if ! shopt -oq posix; then
   fi
 fi
 
+# pip --user, rustup, and similar tools land here. Also added in ~/.profile,
+# but Terminator often starts a non-login shell that only reads this file.
+if [ -d "$HOME/.local/bin" ] ; then
+    PATH="$HOME/.local/bin:$PATH"
+fi
+
 # set PATH so it includes npm global directory
 if [ -d "$HOME/.npm-global/bin" ] ; then
     PATH="$HOME/.npm-global/bin:$PATH"
@@ -133,5 +135,15 @@ if [ -d "$HOME/Scripts" ] ; then
     PATH="$HOME/Scripts:$PATH"
 fi
 
-eval "$(starship init bash)"
-. "$HOME/.cargo/env"
+if command -v starship >/dev/null 2>&1; then
+    eval "$(starship init bash)"
+fi
+
+if [ -f "$HOME/.cargo/env" ]; then
+    . "$HOME/.cargo/env"
+fi
+
+# Host-specific PATH / aliases / secrets (gitignored). Sourced last so it can override.
+if [ -f "$HOME/.dotfiles_local_settings" ]; then
+    . "$HOME/.dotfiles_local_settings"
+fi

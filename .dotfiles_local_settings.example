@@ -1,8 +1,14 @@
 #!/bin/bash
 
+# Copied to ~/.dotfiles_local_settings on a new machine (gitignored).
+# Put host-specific PATH entries, aliases, and secrets here — not in .bashrc.
+
 
 # Environment Variables
 # -----------------------------------------
+# export NVM_DIR="$HOME/.nvm"
+# [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
+# [ -s "$NVM_DIR/bash_completion" ] && . "$NVM_DIR/bash_completion"
 
 
 # Aliases
@@ -15,4 +21,15 @@
 
 # Other
 # -----------------------------------------
-
+# if [ -d "$HOME/.local/share/android-studio/bin" ]; then
+#     PATH="$HOME/.local/share/android-studio/bin:$PATH"
+# fi
+#
+# if [ -d "$HOME/.opencode/bin" ]; then
+#     PATH="$HOME/.opencode/bin:$PATH"
+# fi
+#
+# if [ -d "$HOME/.grok/bin" ]; then
+#     PATH="$HOME/.grok/bin:$PATH"
+#     [[ -r "$HOME/.grok/completions/bash/grok.bash" ]] && . "$HOME/.grok/completions/bash/grok.bash"
+# fi

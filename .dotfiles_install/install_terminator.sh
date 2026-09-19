@@ -1,10 +1,21 @@
 #!/bin/bash
-set -e # ensure script terminates on failures
+set -euo pipefail
 
-sudo apt-get -y update
-sudo apt-get -y install terminator
+sudo apt-get update
+sudo apt-get install -y terminator
 
-cp $HOME/.config/terminator/example.background.jpg $HOME/.config/terminator/background.jpg
-cp $HOME/.config/terminator/example.config $HOME/.config/terminator/config
+mkdir -p "${HOME}/.config/terminator"
 
-sed -i "s|HOME_DIR|${HOME}|g" $HOME/.config/terminator/config
+if [ ! -f "${HOME}/.config/terminator/background.jpg" ]; then
+    cp "${HOME}/.config/terminator/example.background.jpg" \
+        "${HOME}/.config/terminator/background.jpg"
+fi
+
+if [ ! -f "${HOME}/.config/terminator/config" ]; then
+    cp "${HOME}/.config/terminator/example.config" \
+        "${HOME}/.config/terminator/config"
+    sed -i "s|HOME_DIR|${HOME}|g" "${HOME}/.config/terminator/config"
+else
+    echo "Terminator config already exists; not overwriting."
+    echo "Expected font: RobotoMono Nerd Font Light 11"
+fi

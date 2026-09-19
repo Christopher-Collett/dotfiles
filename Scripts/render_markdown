@@ -1,4 +1,4 @@
-#!/bin/python3
+#!/usr/bin/env python3
 
 """Render a Markdown file to a styled HTML temp file and open it in the browser.
 

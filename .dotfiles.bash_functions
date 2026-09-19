@@ -18,11 +18,11 @@ tmux_wait_for_pattern () {
 
     if [ "$pane" == "" ]; then
         echo "Must provide pane name. Args: tmux_wait_for_pattern pane pattern"
-        return false
+        return 1
     fi
     if [ "$pattern" == "" ]; then
         echo "Must provide a pattern to search for. Args: tmux_wait_for_pattern pane pattern"
-        return false
+        return 1
     fi
 
     until tmux capture-pane -pt "$pane" | grep -q "$pattern"; do
