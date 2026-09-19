@@ -120,13 +120,11 @@ if ! shopt -oq posix; then
   fi
 fi
 
-# pip --user, rustup, and similar tools land here. Also added in ~/.profile,
-# but Terminator often starts a non-login shell that only reads this file.
+# Also added in ~/.profile, but Terminator often starts a non-login shell that only reads this file.
 if [ -d "$HOME/.local/bin" ] ; then
     PATH="$HOME/.local/bin:$PATH"
 fi
 
-# set PATH so it includes npm global directory
 if [ -d "$HOME/.npm-global/bin" ] ; then
     PATH="$HOME/.npm-global/bin:$PATH"
 fi
@@ -143,7 +141,8 @@ if [ -f "$HOME/.cargo/env" ]; then
     . "$HOME/.cargo/env"
 fi
 
-# Host-specific PATH / aliases / secrets (gitignored). Sourced last so it can override.
+# Host-specific PATH / aliases / secrets (gitignored).
+# Sourced last so it can override previous env vars.
 if [ -f "$HOME/.dotfiles_local_settings" ]; then
     . "$HOME/.dotfiles_local_settings"
 fi
